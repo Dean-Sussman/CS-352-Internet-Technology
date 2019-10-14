@@ -14,7 +14,7 @@ SOCK352_RESET = 0x08
 SOCK_352_HAS_OPT = 0xA0
 
 PACKET_SIZE = 64000
-head = "!BBBHHLLQQLL"
+head = "!BBBBHHLLQQLL"
 header_len = struct.calcsize(head)
 
 # these functions are global to the class and
@@ -26,10 +26,10 @@ def init(udp_port_tx, udp_port_rx):  # initialize your UDP socket here
     global receiving_port
     global transmitting_port
 
-    if udp_port_tx != 0:
+    if int(udp_port_tx) != 0:
         transmitting_port = int(udp_port_tx)
 
-    if udp_port_rx != 0:
+    if int(udp_port_rx) != 0:
         receiving_port = int(udp_port_rx)
 
 
@@ -37,6 +37,7 @@ class socket:
 
     def __init__(self):  # fill in your code here
         self.syssock = syssock.socket(syssock.AF_INET, syssock.SOCK_DGRAM)
+
         return
 
     def bind(self, address):
@@ -47,9 +48,9 @@ class socket:
         self.syssock.bind(('', receiving_port))
         # transmits from the transmission port
         self.syssock.connect((address[0], transmitting_port))
-        self.syssock.send(RDPPacket(0x1, SOCK352_SYN, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, '').pack())
+        self.syssock.send(RDPPacket(0x1, SOCK352_SYN, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
         packet = self.receive_packets(1)
-        self.syssock.send(RDPPacket(0x1, SOCK352_ACK, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, '').pack())
+        self.syssock.send(RDPPacket(0x1, SOCK352_ACK, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
         print("Client side of connection startup completed")
         return
 
@@ -59,7 +60,7 @@ class socket:
     def accept(self):
         packet, address = self.receive_packets(1)
         self.syssock.connect((address[0], transmitting_port))
-        self.syssock.send(RDPPacket(0x1, SOCK352_SYN | SOCK352_ACK, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, '').pack())
+        self.syssock.send(RDPPacket(0x1, SOCK352_SYN | SOCK352_ACK, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
         packet = self.receive_packets(1)
         print("server side of connection startup completed")
         return self, address
@@ -79,7 +80,8 @@ class socket:
         (packed_packet, address) = self.syssock.recvfrom(PACKET_SIZE + header_len)
         header = struct.unpack(head, packed_packet[:header_len])
         data = packed_packet[header_len:]
-        return_packet = RDPPacket(header, data)
+        return_packet = RDPPacket(header[0], header[1], header[2], header[3], header[4], header[5],
+        									 header[6], header[7], header[8], header[9], header[10], data)
         return return_packet, address
 
     def send_packets(self):
@@ -105,7 +107,7 @@ class RDPPacket:
         self.data = data
 
     def pack(self):
-        return struct.pack(head, self.version, self.flags, self.opt_ptr, self.protocol, self.header_len, self.checksum,
+        return struct.pack("BBBBHHLLQQLL", self.version, self.flags, self.opt_ptr, self.protocol, self.header_len, self.checksum,
                            self.source_port, self.dest_port, self.sequence_no, self.ack_no, self.window,
                            self.payload_len) + self.data
 
