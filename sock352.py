@@ -27,17 +27,16 @@ def init(udp_port_tx, udp_port_rx):  # initialize your UDP socket here
     global transmitting_port
 
     if udp_port_tx != 0:
-        transmitting_port = udp_port_tx
+        transmitting_port = int(udp_port_tx)
 
     if udp_port_rx != 0:
-        receiving_port = udp_port_rx
+        receiving_port = int(udp_port_rx)
 
 
-class Socket:
+class socket:
 
     def __init__(self):  # fill in your code here
         self.syssock = syssock.socket(syssock.AF_INET, syssock.SOCK_DGRAM)
-
         return
 
     def bind(self, address):
