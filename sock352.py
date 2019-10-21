@@ -13,7 +13,7 @@ SOCK352_ACK = 0x04
 SOCK352_RESET = 0x08
 SOCK_352_HAS_OPT = 0xA0
 
-PACKET_SIZE = 64000
+PACKET_SIZE = 32000
 head = "!BBBBHHLLQQLL"
 header_len = struct.calcsize(head)
 
@@ -38,9 +38,8 @@ class socket:
     def __init__(self):  # fill in your code here
         self.syssock = syssock.socket(syssock.AF_INET, syssock.SOCK_DGRAM)
 
-        return
-
     def bind(self, address):
+        self.syssock.bind((address[0], receiving_port))
         return
 
     def connect(self, address):  # fill in your code here
@@ -49,7 +48,7 @@ class socket:
         # transmits from the transmission port
         self.syssock.connect((address[0], transmitting_port))
         self.syssock.send(RDPPacket(0x1, SOCK352_SYN, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
-        packet = self.receive_packets(1)
+        packet, temp = self.receive_packets(1)
         self.syssock.send(RDPPacket(0x1, SOCK352_ACK, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
         print("Client side of connection startup completed")
         return
@@ -68,7 +67,13 @@ class socket:
     def close(self):  # fill in your code here
         return
 
-    def send(self, buffer):
+    def send(self, buffer):    	  
+        packets = []
+        for i in range(0, len(buffer), PACKET_SIZE):
+            buffer_chunk = buffer[i:i + PACKET_SIZE]
+            packet = RDPPacket(1, 0, 0, 0, header_len, 0, 0, 0, i / PACKET_SIZE, i / PACKET_SIZE, 0, len(buffer_chunk), buffer_chunk)
+            packets.append(packet)
+            self.send_packets(packets)
         bytes_sent = 0  # fill in your code here
         return bytes_sent
 
@@ -81,10 +86,10 @@ class socket:
         header = struct.unpack(head, packed_packet[:header_len])
         data = packed_packet[header_len:]
         return_packet = RDPPacket(header[0], header[1], header[2], header[3], header[4], header[5],
-        									 header[6], header[7], header[8], header[9], header[10], data)
+        									 header[6], header[7], header[8], header[9], header[10], header[11], data)
         return return_packet, address
 
-    def send_packets(self):
+    def send_packets(self, packets):
         return
 
 
