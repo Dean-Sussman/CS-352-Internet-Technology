@@ -65,22 +65,28 @@ class socket:
         return self, address
 
     def close(self):  # fill in your code here
+        self.syssock.send(RDPPacket(0x1, SOCK352_FIN, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
+        packet = self.receive_packets(1)
+        self.syssock.send(RDPPacket(0x1, SOCK352_ACK, 0, 0, header_len, 0, 0, 0, 0, 0, 0, 0, b'').pack())
+        packet = self.receive_packets(1)
+        print("socket closed")
+        self.syssock.close()
         return
 
     def send(self, buffer):
         packets = []
+        bytes_sent = header_len
         for i in range(0, len(buffer), PACKET_SIZE):
             buffer_chunk = buffer[i:i + PACKET_SIZE]
             packet = RDPPacket(1, 0, 0, 0, header_len, 0, 0, 0, i / PACKET_SIZE, i / PACKET_SIZE, 0, len(buffer_chunk), buffer_chunk)
             packets.append(packet)
             self.send_packets(packets)
-        bytes_sent = 0  # fill in your code here
+            bytes_sent += header_len
         return bytes_sent
 
     def recv(self, nbytes):
-        self.syssock.recv(nbytes)
+        bytes_received = self.syssock.recv(nbytes)
         print('stuff received')
-        bytes_received = 0  # fill in your code here
         return bytes_received
 
     def receive_packets(self, number_of_packets):
