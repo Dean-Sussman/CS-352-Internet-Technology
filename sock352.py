@@ -11,7 +11,7 @@ SOCK352_SYN = 0x01
 SOCK352_FIN = 0x02
 SOCK352_ACK = 0x04
 SOCK352_RESET = 0x08
-SOCK_352_HAS_OPT = 0xA0
+SOCK352_HAS_OPT = 0xA0
 
 PACKET_SIZE = 32000
 head = "!BBBBHHLLQQLL"
@@ -67,7 +67,7 @@ class socket:
     def close(self):  # fill in your code here
         return
 
-    def send(self, buffer):    	  
+    def send(self, buffer):
         packets = []
         for i in range(0, len(buffer), PACKET_SIZE):
             buffer_chunk = buffer[i:i + PACKET_SIZE]
@@ -78,6 +78,8 @@ class socket:
         return bytes_sent
 
     def recv(self, nbytes):
+        self.syssock.recv(nbytes)
+        print('stuff received')
         bytes_received = 0  # fill in your code here
         return bytes_received
 
@@ -90,7 +92,9 @@ class socket:
         return return_packet, address
 
     def send_packets(self, packets):
-        return
+            self.syssock.sendto(packets[-1].data, ('', transmitting_port))
+            print("send_packets sent")
+            return
 
 
 class RDPPacket:
@@ -115,5 +119,3 @@ class RDPPacket:
         return struct.pack("BBBBHHLLQQLL", self.version, self.flags, self.opt_ptr, self.protocol, self.header_len, self.checksum,
                            self.source_port, self.dest_port, self.sequence_no, self.ack_no, self.window,
                            self.payload_len) + self.data
-
-
